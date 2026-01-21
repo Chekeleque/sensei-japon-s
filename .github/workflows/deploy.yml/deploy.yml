@@ -22,12 +22,17 @@ jobs:
             echo "Error: La clave secreta MY_GEMINI_KEY no está configurada en los Settings del repositorio."
             exit 1
           fi
+
+          # Preparamos una carpeta limpia para el despliegue
+          mkdir -p public
+          cp index.html public/
+
           # Usamos Python para reemplazar de forma segura (evita errores con caracteres especiales)
-          python3 -c "import os; content = open('index.html', encoding='utf-8').read(); open('index.html', 'w', encoding='utf-8').write(content.replace('__CLAVE_API_AQUI__', os.environ['GEMINI_API_KEY']))"
+          python3 -c "import os; content = open('public/index.html', encoding='utf-8').read(); open('public/index.html', 'w', encoding='utf-8').write(content.replace('__CLAVE_API_AQUI__', os.environ['GEMINI_API_KEY']))"
 
           # Verificamos si el reemplazo funcionó
-          if grep -q "__CLAVE_API_AQUI__" index.html; then
-            echo "Error Fatal: El marcador sigue en index.html después del intento de reemplazo."
+          if grep -q "__CLAVE_API_AQUI__" public/index.html; then
+            echo "Error Fatal: El marcador sigue en public/index.html después del intento de reemplazo."
             exit 1
           fi
 
@@ -35,4 +40,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
+          publish_dir: ./public
