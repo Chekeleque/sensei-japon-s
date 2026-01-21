@@ -14,9 +14,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Inject API Key
+        env:
+          GEMINI_API_KEY: ${{ secrets.MY_GEMINI_KEY }}
         run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "Error: La clave secreta MY_GEMINI_KEY no está configurada."
+            exit 1
+          fi
           # Reemplaza el marcador exacto dentro del archivo index.html
-          sed -i "s|__CLAVE_API_AQUI__|${{ secrets.MY_GEMINI_KEY }}|g" index.html
+          sed -i "s|__CLAVE_API_AQUI__|$GEMINI_API_KEY|g" index.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
