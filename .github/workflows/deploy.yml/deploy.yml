@@ -19,10 +19,17 @@ jobs:
         run: |
           if [ -z "$GEMINI_API_KEY" ]; then
             echo "Error: La clave secreta MY_GEMINI_KEY no está configurada."
+            echo "Error: La clave secreta MY_GEMINI_KEY no está configurada en los Settings del repositorio."
             exit 1
           fi
-          # Reemplaza el marcador exacto dentro del archivo index.html
-          sed -i "s|__CLAVE_API_AQUI__|$GEMINI_API_KEY|g" index.html
+          # Usamos Python para reemplazar de forma segura (evita errores con caracteres especiales)
+          python3 -c "import os; content = open('index.html', encoding='utf-8').read(); open('index.html', 'w', encoding='utf-8').write(content.replace('__CLAVE_API_AQUI__', os.environ['GEMINI_API_KEY']))"
+
+          # Verificamos si el reemplazo funcionó
+          if grep -q "__CLAVE_API_AQUI__" index.html; then
+            echo "Error Fatal: El marcador sigue en index.html después del intento de reemplazo."
+            exit 1
+          fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
