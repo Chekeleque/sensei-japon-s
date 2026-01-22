@@ -166,7 +166,7 @@
             out.innerHTML = `<i>Sensei analizando...</i>`;
 
             // Verificación para saber si la clave se inyectó
-            if (ENCODED_KEY === "__CLAVE_API_AQUI__") {
+            if (ENCODED_KEY === "__CLAVE_" + "API_AQUI__") {
                 out.innerHTML = "<b style='color:red'>Error:</b> La clave API no se inyectó. Revisa tu archivo deploy.yml.";
                 return;
             }
