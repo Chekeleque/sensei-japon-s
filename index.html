@@ -143,7 +143,7 @@
 
     <script>
         // Marcador exacto para GitHub Actions
-        const KEY = "__CLAVE_API_AQUI__";
+        const ENCODED_KEY = "__CLAVE_API_AQUI__";
         let modoActual = 'general';
 
         const prompts = {
@@ -166,10 +166,12 @@
             out.innerHTML = `<i>Sensei analizando...</i>`;
 
             // Verificación para saber si la clave se inyectó
-            if (KEY === "__CLAVE_API_AQUI__") {
+            if (ENCODED_KEY === "__CLAVE_API_AQUI__") {
                 out.innerHTML = "<b style='color:red'>Error:</b> La clave API no se inyectó. Revisa tu archivo deploy.yml.";
                 return;
             }
+            
+            const KEY = atob(ENCODED_KEY); // Decodificamos la clave (Base64 -> Texto)
 
             try {
                 const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY}`;

@@ -28,7 +28,7 @@ jobs:
           cp index.html public/
 
           # Usamos Python para reemplazar de forma segura (evita errores con caracteres especiales)
-          python3 -c "import os; content = open('public/index.html', encoding='utf-8').read(); open('public/index.html', 'w', encoding='utf-8').write(content.replace('__CLAVE_API_AQUI__', os.environ['GEMINI_API_KEY']))"
+          python3 -c "import os, base64; content = open('public/index.html', encoding='utf-8').read(); encoded = base64.b64encode(os.environ['GEMINI_API_KEY'].encode('utf-8')).decode('utf-8'); open('public/index.html', 'w', encoding='utf-8').write(content.replace('__CLAVE_API_AQUI__', encoded))"
 
           # Verificamos si el reemplazo funcionó
           if grep -q "__CLAVE_API_AQUI__" public/index.html; then
