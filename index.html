@@ -174,7 +174,7 @@
             const KEY = atob(ENCODED_KEY); // Decodificamos la clave (Base64 -> Texto)
 
             try {
-                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY}`;
+                const  url = 'https://generativelanguage.googleapis.com/${API_VERSION}/models/${MODEL_NAME}:generateContent?key=${apiKey}';
 
                 const response = await fetch(url, {
                     method: 'POST',
