@@ -2,234 +2,234 @@
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sensei Multi-Modo</title>
-    <style>
-        body {
-            background: #121212;
-            color: white;
-            font-family: sans-serif;
-            padding: 10px;
-            margin: 0;
-        }
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sensei Multi-Modo</title>
+        <style>
+                body {
+                        background: #121212;
+                        color: white;
+                        font-family: sans-serif;
+                        padding: 10px;
+                        margin: 0;
+                }
 
-        .box {
-            border: 1px solid #00ffcc;
-            border-radius: 12px;
-            padding: 15px;
-            background: #1e1e1e;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
+                .box {
+                        border: 1px solid #00ffcc;
+                        border-radius: 12px;
+                        padding: 15px;
+                        background: #1e1e1e;
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+                }
 
-        h3 {
-            color: #00ffcc;
-            text-align: center;
-            margin: 0 0 10px 0;
-            font-size: 1.1rem;
-        }
+                h3 {
+                        color: #00ffcc;
+                        text-align: center;
+                        margin: 0 0 10px 0;
+                        font-size: 1.1rem;
+                }
 
-        textarea {
-            width: 100%;
-            background: #2a2a2a;
-            color: white;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 10px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
+                textarea {
+                        width: 100%;
+                        background: #2a2a2a;
+                        color: white;
+                        border: 1px solid #444;
+                        border-radius: 8px;
+                        padding: 10px;
+                        box-sizing: border-box;
+                        font-size: 1rem;
+                }
 
-        .modos {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-        }
+                .modos {
+                        display: flex;
+                        gap: 5px;
+                        margin-bottom: 10px;
+                        overflow-x: auto;
+                        padding-bottom: 5px;
+                }
 
-        .modo-btn {
-            background: #333;
-            color: #aaa;
-            border: 1px solid #555;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            cursor: pointer;
-        }
+                .modo-btn {
+                        background: #333;
+                        color: #aaa;
+                        border: 1px solid #555;
+                        padding: 5px 10px;
+                        border-radius: 20px;
+                        font-size: 0.75rem;
+                        white-space: nowrap;
+                        cursor: pointer;
+                }
 
-        .modo-btn.active {
-            background: #00ffcc;
-            color: black;
-            border-color: #00ffcc;
-            font-weight: bold;
-        }
+                .modo-btn.active {
+                        background: #00ffcc;
+                        color: black;
+                        border-color: #00ffcc;
+                        font-weight: bold;
+                }
 
-        .btns {
-            display: flex;
-            gap: 5px;
-            margin-top: 5px;
-            flex-wrap: wrap;
-        }
+                .btns {
+                        display: flex;
+                        gap: 5px;
+                        margin-top: 5px;
+                        flex-wrap: wrap;
+                }
 
-        button {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+                button {
+                        padding: 12px;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        transition: 0.2s;
+                }
 
-        .b-ana {
-            background: #00ffcc;
-            color: black;
-            flex: 2;
-        }
+                .b-ana {
+                        background: #00ffcc;
+                        color: black;
+                        flex: 2;
+                }
 
-        .b-copy {
-            background: #4a90e2;
-            color: white;
-            width: 45px;
-        }
+                .b-copy {
+                        background: #4a90e2;
+                        color: white;
+                        width: 45px;
+                }
 
-        .b-voz {
-            background: #ffcc00;
-            color: black;
-            width: 45px;
-        }
+                .b-voz {
+                        background: #ffcc00;
+                        color: black;
+                        width: 45px;
+                }
 
-        .b-del {
-            background: #ff4444;
-            color: white;
-            width: 45px;
-        }
+                .b-del {
+                        background: #ff4444;
+                        color: white;
+                        width: 45px;
+                }
 
-        #res {
-            margin-top: 15px;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            max-height: 400px;
-            overflow-y: auto;
-            color: #eee;
-            border-top: 1px solid #333;
-            padding-top: 10px;
-        }
-    </style>
+                #res {
+                        margin-top: 15px;
+                        font-size: 0.95rem;
+                        line-height: 1.6;
+                        max-height: 400px;
+                        overflow-y: auto;
+                        color: #eee;
+                        border-top: 1px solid #333;
+                        padding-top: 10px;
+                }
+        </style>
 </head>
 
 <body>
-    <div class="box">
-        <h3>⛩️ SENSEI MULTI-MODO</h3>
+        <div class="box">
+                <h3>⛩️ SENSEI MULTI-MODO</h3>
 
-        <div class="modos" id="modosContainer">
-            <div class="modo-btn active" onclick="setModo(this, 'general')">Estándar</div>
-            <div class="modo-btn" onclick="setModo(this, 'kanji')">Etimo-Kanji</div>
-            <div class="modo-btn" onclick="setModo(this, 'slang')">Coloquial vs Formal</div>
-            <div class="modo-btn" onclick="setModo(this, 'ejemplos')">+3 Ejemplos</div>
+                <div class="modos" id="modosContainer">
+                        <div class="modo-btn active" onclick="setModo(this, 'general')">Estándar</div>
+                        <div class="modo-btn" onclick="setModo(this, 'kanji')">Etimo-Kanji</div>
+                        <div class="modo-btn" onclick="setModo(this, 'slang')">Coloquial vs Formal</div>
+                        <div class="modo-btn" onclick="setModo(this, 'ejemplos')">+3 Ejemplos</div>
+                </div>
+
+                <textarea id="txt" rows="2" placeholder="Pega el japonés aquí...">こんにちは</textarea>
+
+                <div class="btns">
+                        <button class="b-ana" onclick="go()">ANALIZAR</button>
+                        <button class="b-copy" onclick="copyRes()">📋</button>
+                        <button class="b-voz" onclick="say()">🔊</button>
+                        <button class="b-del" onclick="clr()">✕</button>
+                </div>
+                <div id="res">Elige un modo y presiona analizar.</div>
         </div>
 
-        <textarea id="txt" rows="2" placeholder="Pega el japonés aquí...">こんにちは</textarea>
+        <script>
+                // Marcador exacto para GitHub Actions
+                const ENCODED_KEY = "__CLAVE_API_AQUI__";
+                let modoActual = 'general';
+                const API_VERSION = 'v1beta';
+                const MODEL_NAME = 'gemini-1.5-flash';
 
-        <div class="btns">
-            <button class="b-ana" onclick="go()">ANALIZAR</button>
-            <button class="b-copy" onclick="copyRes()">📋</button>
-            <button class="b-voz" onclick="say()">🔊</button>
-            <button class="b-del" onclick="clr()">✕</button>
-        </div>
-        <div id="res">Elige un modo y presiona analizar.</div>
-    </div>
+                const prompts = {
+                        general: "Analiza gramaticalmente. Traduce al español, da furigana y explica brevemente cada palabra. Usa negritas.",
+                        kanji: "Analiza los Kanjis. Explica radicales, significado y origen brevemente. Todo en español.",
+                        slang: "Explica la frase original y compárala en registro formal e informal.",
+                        ejemplos: "Genera 3 oraciones usando la misma estructura gramatical pero diferentes palabras."
+                };
 
-    <script>
-        // Marcador exacto para GitHub Actions
-        const ENCODED_KEY = "__CLAVE_API_AQUI__";
-        let modoActual = 'general';
-        const API_VERSION = 'v1beta';
-        const MODEL_NAME = 'gemini-1.5-flash';
-
-        const prompts = {
-            general: "Analiza gramaticalmente. Traduce al español, da furigana y explica brevemente cada palabra. Usa negritas.",
-            kanji: "Analiza los Kanjis. Explica radicales, significado y origen brevemente. Todo en español.",
-            slang: "Explica la frase original y compárala en registro formal e informal.",
-            ejemplos: "Genera 3 oraciones usando la misma estructura gramatical pero diferentes palabras."
-        };
-
-        function setModo(btn, modo) {
-            document.querySelectorAll('.modo-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            modoActual = modo;
-        }
-
-        async function go() {
-            const out = document.getElementById('res');
-            const inpt = document.getElementById('txt').value;
-            if (!inpt.trim()) return;
-            out.innerHTML = `<i>Sensei analizando...</i>`;
-
-            // Verificación para saber si la clave se inyectó
-            if (ENCODED_KEY === "__CLAVE_" + "API_AQUI__") {
-                out.innerHTML = "<b style='color:red'>Error:</b> La clave API no se inyectó. Revisa tu archivo deploy.yml.";
-                return;
-            }
-            
-            const KEY = atob(ENCODED_KEY); // Decodificamos la clave (Base64 -> Texto)
-
-            try {
-                const url = `https://generativelanguage.googleapis.com/${API_VERSION}/models/${MODEL_NAME}:generateContent?key=${KEY}`;
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `Actúa como un profesor de japonés experto. Texto: "${inpt}". Tarea: ${prompts[modoActual]}. Responde en ESPAÑOL. Usa Kanji(Hiragana).`
-                            }]
-                        }]
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.candidates && data.candidates[0].content) {
-                    let respuesta = data.candidates[0].content.parts[0].text;
-                    out.innerHTML = respuesta
-                        .replace(/\n/g, '<br>')
-                        .replace(/\*\*(.*?)\*\*/g, '<b style="color:#00ffcc">$1</b>');
-                } else {
-                    console.error("Respuesta inesperada de la API:", data);
-                    let errorMessage = "La API devolvió una respuesta inesperada o vacía.";
-                    if (data.error && data.error.message) {
-                        errorMessage = data.error.message;
-                    }
-                    out.innerHTML = `<b style='color:red'>Error de respuesta:</b> ${errorMessage}<br><small>Asegúrate de que la API 'Generative Language' esté habilitada en tu proyecto de Google Cloud.</small>`;
+                function setModo(btn, modo) {
+                        document.querySelectorAll('.modo-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        modoActual = modo;
                 }
-            } catch (e) {
-                out.innerHTML = `<b style='color:red'>Error de conexión:</b> ${e.message}`;
-            }
-        }
 
-        function copyRes() {
-            const range = document.createRange();
-            range.selectNode(document.getElementById("res"));
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-            document.execCommand("copy");
-            alert("Copiado al portapapeles");
-        }
+                async function go() {
+                        const out = document.getElementById('res');
+                        const inpt = document.getElementById('txt').value;
+                        if (!inpt.trim()) return;
+                        out.innerHTML = `<i>Sensei analizando...</i>`;
 
-        function say() {
-            const ut = new SpeechSynthesisUtterance(document.getElementById('txt').value);
-            ut.lang = 'ja-JP';
-            window.speechSynthesis.speak(ut);
-        }
+                        // Verificación para saber si la clave se inyectó
+                        if (ENCODED_KEY === "__CLAVE_" + "API_AQUI__") {
+                                out.innerHTML = "<b style='color:red'>Error:</b> La clave API no se inyectó. Revisa tu archivo deploy.yml.";
+                                return;
+                        }
 
-        function clr() {
-            document.getElementById('txt').value = "";
-            document.getElementById('res').innerHTML = "Listo.";
-        }
-    </script>
+                        const KEY = atob(ENCODED_KEY); // Decodificamos la clave (Base64 -> Texto)
+
+                        try {
+                                const url = `https://generativelanguage.googleapis.com/${API_VERSION}/models/${MODEL_NAME}:generateContent?key=${KEY}`;
+
+                                const response = await fetch(url, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                                contents: [{
+                                                        parts: [{
+                                                                text: `Actúa como un profesor de japonés experto. Texto: "${inpt}". Tarea: ${prompts[modoActual]}. Responde en ESPAÑOL. Usa Kanji(Hiragana).`
+                                                        }]
+                                                }]
+                                        })
+                                });
+
+                                const data = await response.json();
+
+                                if (data.candidates && data.candidates[0].content) {
+                                        let respuesta = data.candidates[0].content.parts[0].text;
+                                        out.innerHTML = respuesta
+                                                .replace(/\n/g, '<br>')
+                                                .replace(/\*\*(.*?)\*\*/g, '<b style="color:#00ffcc">$1</b>');
+                                } else {
+                                        console.error("Respuesta inesperada de la API:", data);
+                                        let errorMessage = "La API devolvió una respuesta inesperada o vacía.";
+                                        if (data.error && data.error.message) {
+                                                errorMessage = data.error.message;
+                                        }
+                                        out.innerHTML = `<b style='color:red'>Error de respuesta:</b> ${errorMessage}<br><small>Asegúrate de que la API 'Generative Language' esté habilitada en tu proyecto de Google Cloud.</small>`;
+                                }
+                        } catch (e) {
+                                out.innerHTML = `<b style='color:red'>Error de conexión:</b> ${e.message}`;
+                        }
+                }
+
+                function copyRes() {
+                        const range = document.createRange();
+                        range.selectNode(document.getElementById("res"));
+                        window.getSelection().removeAllRanges();
+                        window.getSelection().addRange(range);
+                        document.execCommand("copy");
+                        alert("Copiado al portapapeles");
+                }
+
+                function say() {
+                        const ut = new SpeechSynthesisUtterance(document.getElementById('txt').value);
+                        ut.lang = 'ja-JP';
+                        window.speechSynthesis.speak(ut);
+                }
+
+                function clr() {
+                        document.getElementById('txt').value = "";
+                        document.getElementById('res').innerHTML = "Listo.";
+                }
+        </script>
 </body>
 
 </html>
