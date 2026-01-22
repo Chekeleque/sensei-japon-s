@@ -198,10 +198,15 @@
                         .replace(/\n/g, '<br>')
                         .replace(/\*\*(.*?)\*\*/g, '<b style="color:#00ffcc">$1</b>');
                 } else {
-                    out.innerHTML = "Error de respuesta: " + (data.error ? data.error.message : "Desconocido");
+                    console.error("Respuesta inesperada de la API:", data);
+                    let errorMessage = "La API devolvió una respuesta inesperada o vacía.";
+                    if (data.error && data.error.message) {
+                        errorMessage = data.error.message;
+                    }
+                    out.innerHTML = `<b style='color:red'>Error de respuesta:</b> ${errorMessage}<br><small>Asegúrate de que la API 'Generative Language' esté habilitada en tu proyecto de Google Cloud.</small>`;
                 }
             } catch (e) {
-                out.innerHTML = "Error de conexión: " + e.message;
+                out.innerHTML = `<b style='color:red'>Error de conexión:</b> ${e.message}`;
             }
         }
 
