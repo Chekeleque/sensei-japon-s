@@ -203,7 +203,12 @@
                                         if (data.error && data.error.message) {
                                                 errorMessage = data.error.message;
                                         }
-                                        out.innerHTML = `<b style='color:red'>Error de respuesta:</b> ${errorMessage}<br><small>Asegúrate de que la API 'Generative Language' esté habilitada en tu proyecto de Google Cloud.</small>`;
+
+                                        let helpText = "Asegúrate de que la API 'Generative Language' esté habilitada en tu proyecto de Google Cloud.";
+                                        if (errorMessage.includes('expired') || errorMessage.includes('API key')) {
+                                                helpText = "Tu API Key ha caducado o es inválida. Actualiza el secreto MY_GEMINI_KEY en GitHub y vuelve a desplegar.";
+                                        }
+                                        out.innerHTML = `<b style='color:red'>Error de respuesta:</b> ${errorMessage}<br><small>${helpText}</small>`;
                                 }
                         } catch (e) {
                                 out.innerHTML = `<b style='color:red'>Error de conexión:</b> ${e.message}`;
