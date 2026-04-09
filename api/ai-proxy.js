@@ -6,6 +6,9 @@ export default async function handler(req, res) {
     try {
         if (service === 'gemini') {
             const API_KEY = process.env.GEMINI_API_KEY;
+            if (!API_KEY) {
+                return res.status(500).json({ error: 'Error de configuración: GEMINI_API_KEY no está definida en Vercel.' });
+            }
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
             const response = await fetch(url, {
@@ -19,13 +22,26 @@ export default async function handler(req, res) {
             });
 
             const data = await response.json();
-            if (data.error) return res.status(500).json({ error: data.error.message });
+
+            if (!response.ok) {
+                // Si el estado HTTP no es OK, extrae el mensaje de error de la respuesta de Gemini
+                const errorMessage = data.error?.message || `Error desconocido de Gemini (HTTP ${response.status})`;
+                return res.status(response.status).json({ error: errorMessage });
+            }
             
-            return res.status(200).json({ text: data.candidates[0].content.parts[0].text });
+            if (data.candidates && data.candidates[0].content) {
+                return res.status(200).json({ text: data.candidates[0].content.parts[0].text });
+            } else {
+                // Maneja el caso de una respuesta HTTP exitosa pero sin contenido generado
+                return res.status(500).json({ error: 'Respuesta inesperada de Gemini: no se encontró contenido generado.' });
+            }
         }
 
         if (service === 'deepl') {
             const API_KEY = process.env.DEEPL_API_KEY;
+            if (!API_KEY) {
+                return res.status(500).json({ error: 'Error de configuración: DEEPL_API_KEY no está definida en Vercel.' });
+            }
             const url = `https://api-free.deepl.com/v2/translate`;
 
             const response = await fetch(url, {
@@ -41,15 +57,22 @@ export default async function handler(req, res) {
             });
 
             const data = await response.json();
-            if (!response.ok) return res.status(500).json({ error: 'Error en DeepL' });
+
+            if (!response.ok) {
+                // Si el estado HTTP no es OK, extrae el mensaje de error de la respuesta de DeepL
+                const errorMessage = data.message || `Error desconocido de DeepL (HTTP ${response.status})`;
+                return res.status(response.status).json({ error: errorMessage });
+            }
 
             return res.status(200).json({ 
                 translations: [{ text: data.translations[0].text }] 
             });
         }
 
+        return res.status(400).json({ error: 'Servicio no especificado o no soportado.' });
+
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ error: 'Error interno del servidor proxy' });
+        return res.status(500).json({ error: `Error interno del servidor proxy: ${error.message}` });
     }
 }

@@ -216,12 +216,8 @@
                                 if (data.translations && data.translations[0].text) {
                                         out.innerHTML = `<b>Traducción DeepL (ES-MX):</b><br>${data.translations[0].text}`;
                                 } else {
-                                        console.error("Respuesta inesperada del proxy (DeepL):", data);
-                                        let errorMessage = "El proxy devolvió una respuesta inesperada o vacía para DeepL.";
-                                        if (data.error) {
-                                                errorMessage = data.error;
-                                        }
-                                        out.innerHTML = `<b style='color:red'>Error de respuesta (DeepL):</b> ${errorMessage}<br><small>Verifica la configuración de tu proxy y la clave API de DeepL.</small>`;
+                                        const errorMsg = data.error || 'Respuesta inesperada de DeepL.';
+                                        out.innerHTML = `<b style='color:red'>Error de respuesta (DeepL):</b> ${errorMsg}`;
                                 }
                         } catch (e) {
                                 out.innerHTML = `<b style='color:red'>Error de conexión (DeepL):</b> ${e.message}<br><small>Asegúrate de que tu proxy esté funcionando correctamente.</small>`;
