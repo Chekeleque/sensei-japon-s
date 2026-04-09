@@ -100,6 +100,11 @@
                         width: 45px;
                 }
 
+                .b-deepl {
+                        background: #29b6f6; /* Un tono de azul para DeepL */
+                        color: white;
+                        width: 45px;
+                }
                 .b-del {
                         background: #ff4444;
                         color: white;
@@ -134,6 +139,7 @@
 
                 <div class="btns">
                         <button class="b-ana" onclick="go()">ANALIZAR</button>
+                        <button class="b-deepl" onclick="translateWithDeepL()">🇪🇸</button>
                         <button class="b-copy" onclick="copyRes()">📋</button>
                         <button class="b-voz" onclick="say()">🔊</button>
                         <button class="b-del" onclick="clr()">✕</button>
@@ -142,10 +148,7 @@
         </div>
 
         <script>
-                // Marcador exacto para GitHub Actions
-                const ENCODED_KEY = "__CLAVE_API_AQUI__";
                 let modoActual = 'general';
-                const API_VERSION = 'v1beta';
 
                 const prompts = {
                         general: "Analiza gramaticalmente. Traduce al español, da furigana y explica brevemente cada palabra. Usa negritas.",
@@ -203,34 +206,64 @@
 
                                 if (data.candidates && data.candidates[0].content) {
                                         let respuesta = data.candidates[0].content.parts[0].text;
-                                        out.innerHTML = respuesta
-                                                .replace(/\n/g, '<br>')
-                                                .replace(/\*\*(.*?)\*\*/g, '<b style="color:#00ffcc">$1</b>');
+                                        out.innerHTML = respuesta.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b style="color:#00ffcc">$1</b>');
                                 } else {
-                                        console.error("Respuesta inesperada de la API:", data);
-                                        let errorMessage = "La API devolvió una respuesta inesperada o vacía.";
-                                        if (data.error && data.error.message) {
-                                                errorMessage = data.error.message;
+                                        console.error("Respuesta inesperada del proxy (Gemini):", data);
+                                        let errorMessage = "El proxy devolvió una respuesta inesperada o vacía para Gemini.";
+                                        if (data.error) {
+                                                errorMessage = data.error; // El proxy debería devolver un error claro
                                         }
-
-                                        let helpText = "Asegúrate de que la API 'Generative Language' esté habilitada en tu proyecto de Google Cloud.";
-                                        if (errorMessage.includes('expired') || errorMessage.includes('API key')) {
-                                                helpText = "Tu API Key ha caducado o es inválida. Actualiza el secreto MY_GEMINI_KEY en GitHub y vuelve a desplegar.";
-                                        }
-                                        out.innerHTML = `<b style='color:red'>Error de respuesta:</b> ${errorMessage}<br><small>${helpText}</small>`;
+                                        out.innerHTML = `<b style='color:red'>Error de respuesta (Gemini):</b> ${errorMessage}<br><small>Verifica la configuración de tu proxy y la clave API de Gemini.</small>`;
                                 }
                         } catch (e) {
-                                out.innerHTML = `<b style='color:red'>Error de conexión:</b> ${e.message}`;
+                                out.innerHTML = `<b style='color:red'>Error de conexión (Gemini):</b> ${e.message}<br><small>Asegúrate de que tu proxy esté funcionando correctamente.</small>`;
                         }
                 }
 
-                function copyRes() {
-                        const range = document.createRange();
-                        range.selectNode(document.getElementById("res"));
-                        window.getSelection().removeAllRanges();
-                        window.getSelection().addRange(range);
-                        document.execCommand("copy");
-                        alert("Copiado al portapapeles");
+                async function translateWithDeepL() {
+                        const out = document.getElementById('res');
+                        const inpt = document.getElementById('txt').value;
+                        if (!inpt.trim()) return;
+                        out.innerHTML = `<i>Traduciendo con DeepL...</i>`;
+
+                        try {
+                                const response = await fetch('/api/ai-proxy', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                                service: 'deepl', // Indicamos que es para DeepL
+                                                input: inpt,
+                                                target_lang: 'ES-MX' // Español de México para Latinoamérica
+                                        })
+                                });
+
+                                const data = await response.json();
+
+                                if (data.translations && data.translations[0].text) {
+                                        out.innerHTML = `<b>Traducción DeepL (ES-MX):</b><br>${data.translations[0].text}`;
+                                } else {
+                                        console.error("Respuesta inesperada del proxy (DeepL):", data);
+                                        let errorMessage = "El proxy devolvió una respuesta inesperada o vacía para DeepL.";
+                                        if (data.error) {
+                                                errorMessage = data.error;
+                                        }
+                                        out.innerHTML = `<b style='color:red'>Error de respuesta (DeepL):</b> ${errorMessage}<br><small>Verifica la configuración de tu proxy y la clave API de DeepL.</small>`;
+                                }
+                        } catch (e) {
+                                out.innerHTML = `<b style='color:red'>Error de conexión (DeepL):</b> ${e.message}<br><small>Asegúrate de que tu proxy esté funcionando correctamente.</small>`;
+                        }
+                }
+
+                async function copyRes() {
+                        const resDiv = document.getElementById("res");
+                        try {
+                            await navigator.clipboard.writeText(resDiv.innerText);
+                            const btn = document.querySelector('.b-copy');
+                            btn.textContent = "✅";
+                            setTimeout(() => btn.textContent = "📋", 2000);
+                        } catch (err) {
+                            console.error('Error al copiar: ', err);
+                        }
                 }
 
                 function say() {
