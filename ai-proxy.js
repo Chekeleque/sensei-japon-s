@@ -26,7 +26,6 @@ export default async function handler(req, res) {
 
         if (service === 'deepl') {
             const API_KEY = process.env.DEEPL_API_KEY;
-            // Nota: Usa api-free.deepl.com si tienes cuenta gratuita
             const url = `https://api-free.deepl.com/v2/translate`;
 
             const response = await fetch(url, {
@@ -37,7 +36,7 @@ export default async function handler(req, res) {
                 },
                 body: JSON.stringify({
                     text: [input],
-                    target_lang: target_lang || 'ES'
+                    target_lang: target_lang || 'ES-MX'
                 })
             });
 
