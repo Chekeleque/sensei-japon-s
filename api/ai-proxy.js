@@ -9,7 +9,23 @@ export default async function handler(req, res) {
             if (!API_KEY) {
                 return res.status(500).json({ error: 'Error de configuración: GEMINI_API_KEY no está definida en Vercel.' });
             }
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+            // 1. Buscar automáticamente un modelo disponible
+            const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);
+            const listData = await listResp.json();
+            
+            if (!listResp.ok) {
+                return res.status(listResp.status).json({ error: listData.error?.message || 'No se pudo obtener la lista de modelos de Gemini.' });
+            }
+
+            const modelObj = listData.models?.find(m => m.name.includes("gemini-1.5-flash") && m.supportedGenerationMethods.includes("generateContent"))
+                          || listData.models?.find(m => m.supportedGenerationMethods.includes("generateContent"));
+
+            if (!modelObj) {
+                return res.status(404).json({ error: 'No se encontró ningún modelo de Gemini compatible con generateContent en tu cuenta.' });
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/${modelObj.name}:generateContent?key=${API_KEY}`;
 
             const response = await fetch(url, {
                 method: 'POST',
