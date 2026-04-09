@@ -169,54 +169,28 @@
                         if (!inpt.trim()) return;
                         out.innerHTML = `<i>Sensei analizando...</i>`;
 
-                        // Verificación para saber si la clave se inyectó
-                        if (ENCODED_KEY === "__CLAVE_" + "API_AQUI__") {
-                                out.innerHTML = "<b style='color:red'>Error:</b> La clave API no se inyectó. Revisa tu archivo deploy.yml.";
-                                return;
-                        }
-
-                        const KEY = atob(ENCODED_KEY); // Decodificamos la clave (Base64 -> Texto)
-
                         try {
-                                // 1. Primero buscamos el modelo correcto disponible (Lógica de tu código manual)
-                                const listResp = await fetch(`https://generativelanguage.googleapis.com/${API_VERSION}/models?key=${KEY}`);
-                                const listData = await listResp.json();
-                                
-                                // Buscamos 'flash' preferiblemente, o cualquiera que soporte generateContent
-                                const modelObj = listData.models?.find(m => m.name.includes("gemini-1.5-flash") && m.supportedGenerationMethods.includes("generateContent"))
-                                              || listData.models?.find(m => m.supportedGenerationMethods.includes("generateContent"));
-
-                                if (!modelObj) throw new Error("No se encontró ningún modelo compatible en la API.");
-
-                                const url = `https://generativelanguage.googleapis.com/${API_VERSION}/${modelObj.name}:generateContent?key=${KEY}`;
-
-                                const response = await fetch(url, {
+                                const response = await fetch('/api/ai-proxy', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
-                                                contents: [{
-                                                        parts: [{
-                                                                text: `Actúa como un profesor de japonés experto. Texto: "${inpt}". Tarea: ${prompts[modoActual]}. Responde en ESPAÑOL. Usa Kanji(Hiragana).`
-                                                        }]
-                                                }]
+                                                service: 'gemini',
+                                                input: inpt,
+                                                prompt: prompts[modoActual]
                                         })
                                 });
 
                                 const data = await response.json();
 
-                                if (data.candidates && data.candidates[0].content) {
-                                        let respuesta = data.candidates[0].content.parts[0].text;
+                                if (response.ok && data.text) {
+                                        let respuesta = data.text;
                                         out.innerHTML = respuesta.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b style="color:#00ffcc">$1</b>');
                                 } else {
-                                        console.error("Respuesta inesperada del proxy (Gemini):", data);
-                                        let errorMessage = "El proxy devolvió una respuesta inesperada o vacía para Gemini.";
-                                        if (data.error) {
-                                                errorMessage = data.error; // El proxy debería devolver un error claro
-                                        }
-                                        out.innerHTML = `<b style='color:red'>Error de respuesta (Gemini):</b> ${errorMessage}<br><small>Verifica la configuración de tu proxy y la clave API de Gemini.</small>`;
+                                        const errorMsg = data.error || 'Error desconocido';
+                                        out.innerHTML = `<b style='color:red'>Error:</b> ${errorMsg}`;
                                 }
                         } catch (e) {
-                                out.innerHTML = `<b style='color:red'>Error de conexión (Gemini):</b> ${e.message}<br><small>Asegúrate de que tu proxy esté funcionando correctamente.</small>`;
+                                out.innerHTML = `<b style='color:red'>Error:</b> No se pudo conectar con el servidor proxy.`;
                         }
                 }
 
