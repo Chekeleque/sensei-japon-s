@@ -68,7 +68,7 @@ export default async function handler(req, res) {
                 },
                 body: JSON.stringify({
                     text: [input],
-                    target_lang: target_lang || 'ES-MX'
+                    target_lang: target_lang || 'ES'
                 })
             });
 

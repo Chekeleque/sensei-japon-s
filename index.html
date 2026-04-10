@@ -207,14 +207,14 @@
                                         body: JSON.stringify({
                                                 service: 'deepl', // Indicamos que es para DeepL
                                                 input: inpt,
-                                                target_lang: 'ES-MX' // Español de México para Latinoamérica
+                                                target_lang: 'ES' // DeepL solo soporta 'ES' para español
                                         })
                                 });
 
                                 const data = await response.json();
 
                                 if (data.translations && data.translations[0].text) {
-                                        out.innerHTML = `<b>Traducción DeepL (ES-MX):</b><br>${data.translations[0].text}`;
+                                        out.innerHTML = `<b>Traducción DeepL:</b><br>${data.translations[0].text}`;
                                 } else {
                                         const errorMsg = data.error || data.message || 'Error desconocido en DeepL.';
                                         out.innerHTML = `<b style='color:red'>Error DeepL:</b> ${errorMsg}`;
