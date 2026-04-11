@@ -12,8 +12,8 @@ export default async function handler(req, res) {
 
             // Optimizamos: Usamos directamente el modelo flash para evitar latencia de descubrimiento
             // Esto ayuda a reducir los errores de "High Demand" al hacer menos peticiones previas.
-            const MODEL_NAME = "gemini-1.5-flash";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+            const MODEL_NAME = "models/gemini-1.5-flash";
+            const url = `https://generativelanguage.googleapis.com/v1/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -29,6 +29,11 @@ export default async function handler(req, res) {
 
             if (!response.ok) {
                 // Si el estado HTTP no es OK, extrae el mensaje de error de la respuesta de Gemini
+                if (response.status === 503 || response.status === 429) {
+                    return res.status(response.status).json({ 
+                        error: 'El servidor de Google está saturado (Alta demanda). Por favor, espera unos segundos y reintenta.' 
+                    });
+                }
                 const errorMessage = data.error?.message || `Error desconocido de Gemini (HTTP ${response.status})`;
                 return res.status(response.status).json({ error: errorMessage });
             }
