@@ -105,6 +105,11 @@
                         color: white;
                         width: 45px;
                 }
+                .b-furi {
+                        background: #9b59b6; /* Púrpura para Furigana */
+                        color: white;
+                        width: 45px;
+                }
                 .b-del {
                         background: #ff4444;
                         color: white;
@@ -140,6 +145,7 @@
                 <div class="btns">
                         <button class="b-ana" onclick="go()">ANALIZAR</button>
                         <button class="b-deepl" onclick="translateWithDeepL()">🇪🇸</button>
+                        <button class="b-furi" onclick="getFurigana()">あ</button>
                         <button class="b-copy" onclick="copyRes()">📋</button>
                         <button class="b-voz" onclick="say()">🔊</button>
                         <button class="b-del" onclick="clr()">✕</button>
@@ -152,7 +158,8 @@
                         general: "Analiza gramaticalmente. Traduce al español, da furigana y explica brevemente cada palabra. Usa negritas.",
                         kanji: "Analiza los Kanjis de la frase. Explica sus radicales, significado individual y origen etimológico brevemente. Todo en español.",
                         slang: "Explica la frase original y luego muestra cómo se diría en registro formal (Keigo) y en registro informal (slang de calle). Explica las diferencias de matiz en español.",
-                        ejemplos: "Analiza la frase y luego genera 3 oraciones adicionales usando la misma estructura gramatical pero con diferentes palabras. Tradúcelas al español."
+                        ejemplos: "Analiza la frase y luego genera 3 oraciones adicionales usando la misma estructura gramatical pero con diferentes palabras. Tradúcelas al español.",
+                        furigana: "Convierte el texto a formato HTML usando etiquetas <ruby> y <rt> para mostrar el furigana sobre todos los Kanjis. Devuelve SOLAMENTE el código HTML resultante sin bloques de código."
                 };
 
                 let modoActual = 'general';
@@ -221,6 +228,38 @@
                                 }
                         } catch (e) {
                                 out.innerHTML = `<b style='color:red'>Error de conexión (DeepL):</b> ${e.message}<br><small>Asegúrate de que tu proxy esté funcionando correctamente.</small>`;
+                        }
+                }
+
+                async function getFurigana() {
+                        const out = document.getElementById('res');
+                        const inpt = document.getElementById('txt').value;
+                        if (!inpt.trim()) return;
+                        out.innerHTML = `<i>Generando Furigana...</i>`;
+
+                        try {
+                                const response = await fetch('/api/ai-proxy', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                                service: 'gemini',
+                                                input: inpt,
+                                                prompt: prompts.furigana
+                                        })
+                                });
+
+                                const data = await response.json();
+
+                                if (response.ok && data.text) {
+                                        // Limpiamos posibles backticks que la IA a veces agrega
+                                        let respuesta = data.text.replace(/```html|```/g, '');
+                                        out.innerHTML = `<div style="font-size: 1.5rem; padding: 10px;">${respuesta}</div>`;
+                                } else {
+                                        const errorMsg = data.error || 'Error al generar furigana';
+                                        out.innerHTML = `<b style='color:red'>Error:</b> ${errorMsg}`;
+                                }
+                        } catch (e) {
+                                out.innerHTML = `<b style='color:red'>Error:</b> No se pudo conectar con el proxy.`;
                         }
                 }
 
