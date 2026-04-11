@@ -10,10 +10,22 @@ export default async function handler(req, res) {
                 return res.status(500).json({ error: 'Error de configuración: GEMINI_API_KEY no está definida en Vercel.' });
             }
 
-            // Optimizamos: Usamos directamente el modelo flash para evitar latencia de descubrimiento
-            // Esto ayuda a reducir los errores de "High Demand" al hacer menos peticiones previas.
-            const MODEL_NAME = "models/gemini-1.5-flash";
-            const url = `https://generativelanguage.googleapis.com/v1/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+            // 1. Buscar automáticamente un modelo disponible para evitar errores de "modelo no encontrado"
+            const listResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
+            const listData = await listResp.json();
+
+            if (!listResp.ok) {
+                return res.status(listResp.status).json({ error: listData.error?.message || 'No se pudo obtener la lista de modelos de Gemini.' });
+            }
+
+            const modelObj = listData.models?.find(m => m.name.includes("gemini-1.5-flash") && m.supportedGenerationMethods.includes("generateContent"))
+                          || listData.models?.find(m => m.supportedGenerationMethods.includes("generateContent"));
+
+            if (!modelObj) {
+                return res.status(404).json({ error: 'No se encontró ningún modelo de Gemini compatible con su cuenta.' });
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1/${modelObj.name}:generateContent?key=${API_KEY}`;
 
             const response = await fetch(url, {
                 method: 'POST',
