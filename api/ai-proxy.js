@@ -28,40 +28,27 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
 
-    // --- Modelo de Gemini dinámico con caché ---
-    // Utiliza un objeto global para el caché del modelo.
-    const MODEL_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // Cachear la lista de modelos por 6 horas
-    const modelCache = global._geminiModelCache = global._geminiModelCache || { model: null, timestamp: 0 };
+    // --- Búsqueda automática de modelo disponible ---
+    // Consultamos siempre para asegurar que el modelo existe y está disponible
+    const listResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
+    const listData = await listResp.json();
 
-    let selectedModelName = null;
-
-    // Si tenemos un modelo cacheado y no ha expirado, lo usamos.
-    if (modelCache.model && (Date.now() - modelCache.timestamp < MODEL_CACHE_TTL_MS)) {
-        selectedModelName = modelCache.model.name;
-    } else {
-        // Si no hay modelo cacheado o ha expirado, listamos los modelos disponibles.
-        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
-        const listData = await listResp.json();
-
-        if (!listResp.ok) {
-            throw new Error(listData.error?.message || 'No se pudo obtener la lista de modelos de Gemini.');
-        }
-
-        const models = listData.models || [];
-        let foundModel = models.find(m => m.name.includes("gemini-1.5-flash") && m.supportedGenerationMethods.includes("generateContent"));
-
-        if (!foundModel) {
-            foundModel = models.find(m => m.supportedGenerationMethods.includes("generateContent"));
-        }
-
-        if (!foundModel) {
-            throw new Error('No se encontró ningún modelo de Gemini compatible con generateContent.');
-        }
-        modelCache.model = foundModel;
-        modelCache.timestamp = Date.now();
-        selectedModelName = foundModel.name;
+    if (!listResp.ok) {
+        throw new Error(listData.error?.message || 'No se pudo obtener la lista de modelos de Gemini.');
     }
-    // --- Fin del modelo de Gemini dinámico con caché ---
+
+    const models = listData.models || [];
+    // Priorizamos gemini-1.5-flash por velocidad y estabilidad
+    let foundModel = models.find(m => m.name.includes("gemini-1.5-flash") && m.supportedGenerationMethods.includes("generateContent"));
+
+    if (!foundModel) {
+        foundModel = models.find(m => m.supportedGenerationMethods.includes("generateContent"));
+    }
+
+    if (!foundModel) {
+        throw new Error('No se encontró ningún modelo de Gemini compatible en este momento.');
+    }
+    const selectedModelName = foundModel.name;
 
     const url = `https://generativelanguage.googleapis.com/v1/${selectedModelName}:generateContent?key=${API_KEY}`;
 
@@ -70,11 +57,11 @@ async function handleGemini(res, input, prompt) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{
-                parts: [{ text: `Actúa como un profesor de japonés experto. Texto: "${input}". Tarea: ${prompt}. Responde en ESPAÑOL LATINOAMERICANO fluido. Usa Kanji(Hiragana).` }]
+                parts: [{ text: `Actúa como un profesor de japonés experto. Texto: "${input}". Tarea: ${prompt}. Responde en ESPAÑOL LATINOAMERICANO fluido. Usa Kanji(Hiragana). IMPORTANTE: Proporciona una explicación detallada, completa y no cortes la respuesta bajo ninguna circunstancia.` }]
             }],
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 2048, // Aumentado para permitir explicaciones más completas
+                maxOutputTokens: 4096, // Aumentado significativamente para evitar cortes
             }
         })
     });
