@@ -74,7 +74,7 @@ async function handleGemini(res, input, prompt) {
             }],
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 800,
+                maxOutputTokens: 2048, // Aumentado para permitir explicaciones más completas
             }
         })
     });
