@@ -28,9 +28,42 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
 
-    // Optamos por un modelo fijo para mayor velocidad. gemini-1.5-flash es excelente para apps educativas.
-    const model = "gemini-1.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${API_KEY}`;
+    // --- Modelo de Gemini dinámico con caché ---
+    // Utiliza un objeto global para el caché del modelo.
+    const MODEL_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // Cachear la lista de modelos por 6 horas
+    const modelCache = global._geminiModelCache = global._geminiModelCache || { model: null, timestamp: 0 };
+
+    let selectedModelName = null;
+
+    // Si tenemos un modelo cacheado y no ha expirado, lo usamos.
+    if (modelCache.model && (Date.now() - modelCache.timestamp < MODEL_CACHE_TTL_MS)) {
+        selectedModelName = modelCache.model.name;
+    } else {
+        // Si no hay modelo cacheado o ha expirado, listamos los modelos disponibles.
+        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
+        const listData = await listResp.json();
+
+        if (!listResp.ok) {
+            throw new Error(listData.error?.message || 'No se pudo obtener la lista de modelos de Gemini.');
+        }
+
+        const models = listData.models || [];
+        let foundModel = models.find(m => m.name.includes("gemini-1.5-flash") && m.supportedGenerationMethods.includes("generateContent"));
+
+        if (!foundModel) {
+            foundModel = models.find(m => m.supportedGenerationMethods.includes("generateContent"));
+        }
+
+        if (!foundModel) {
+            throw new Error('No se encontró ningún modelo de Gemini compatible con generateContent.');
+        }
+        modelCache.model = foundModel;
+        modelCache.timestamp = Date.now();
+        selectedModelName = foundModel.name;
+    }
+    // --- Fin del modelo de Gemini dinámico con caché ---
+
+    const url = `https://generativelanguage.googleapis.com/v1/${selectedModelName}:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
         method: 'POST',
