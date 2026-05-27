@@ -28,33 +28,42 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
 
-    // Cambiamos a v1beta porque v1 suele dar error de "not found" con gemini-1.5-flash en algunas regiones
-    const modelName = "gemini-1.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+    // Usamos el endpoint v1 estable. Si persiste el error "not found", 
+    // verifica que tu API Key sea de Google AI Studio (https://aistudio.google.com/)
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{
-                parts: [{ text: `Eres un experto lingüista y profesor de japonés (Sensei). 
-                Analiza el siguiente texto: "${input}". Tarea: ${prompt}. 
-                REQUISITOS PARA KANJI:
-                1. Significado detallado y preciso.
-                2. Identificación exacta del RADICAL (Bushu) principal y su significado.
-                3. Lecturas Onyomi (en Katakana) y Kunyomi (en Hiragana).
-                4. Número de trazos y nivel de JLPT aproximado.
-                5. 3 ejemplos de palabras comunes con su lectura y traducción.
+                parts: [{ text: `Actúa como un Sensei experto en etimología japonesa.
+                Analiza el texto: "${input}". 
+                Tarea adicional: ${prompt}.
+
+                REGLAS DE ORO PARA KANJI:
+                1. RADICAL (Bushu): Identifica el radical principal según el sistema Kangxi. Explica su significado y qué aporta al kanji actual.
+                2. SIGNIFICADO: Define el concepto principal y matices de uso.
+                3. LECTURAS: Onyomi (en Katakana) y Kunyomi (en Hiragana).
+                4. FICHA TÉCNICA: Número de trazos y nivel JLPT (N5 a N1).
+                5. VOCABULARIO: Proporciona 3 palabras compuestas reales con su lectura y traducción.
+
                 REQUISITOS DE FORMATO:
-                - Responde en ESPAÑOL LATINOAMERICANO fluido.
-                - Sé técnicamente riguroso y no inventes componentes.
+                - Idioma: Español Latinoamericano.
+                - Rigor técnico: No inventes componentes ni significados. 
                 - No cortes la respuesta.` }]
             }],
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 4096,
+                maxOutputTokens: 2048,
                 topP: 0.95,
-            }
+            },
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+            ]
         })
     });
 
