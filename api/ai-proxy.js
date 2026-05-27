@@ -28,23 +28,27 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
 
-    // Usamos gemini-1.5-flash directamente para mayor velocidad y evitar cuotas de listado de modelos
-    const modelName = "models/gemini-1.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1/${modelName}:generateContent?key=${API_KEY}`;
+    // Cambiamos a v1beta porque v1 suele dar error de "not found" con gemini-1.5-flash en algunas regiones
+    const modelName = "gemini-1.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{
-                parts: [{ text: `Eres un experto lingüista y profesor de japonés. 
-                Analiza el siguiente texto: "${input}". 
-                Tarea: ${prompt}. 
-                REQUISITOS OBLIGATORIOS:
-                1. Si es un Kanji, detalla sus RADICALES, significado, lecturas Onyomi/Kunyomi y ejemplos de uso.
-                2. Responde en ESPAÑOL LATINOAMERICANO fluido.
-                3. Proporciona una explicación técnica completa.
-                4. No omitas información ni cortes la respuesta.` }]
+                parts: [{ text: `Eres un experto lingüista y profesor de japonés (Sensei). 
+                Analiza el siguiente texto: "${input}". Tarea: ${prompt}. 
+                REQUISITOS PARA KANJI:
+                1. Significado detallado y preciso.
+                2. Identificación exacta del RADICAL (Bushu) principal y su significado.
+                3. Lecturas Onyomi (en Katakana) y Kunyomi (en Hiragana).
+                4. Número de trazos y nivel de JLPT aproximado.
+                5. 3 ejemplos de palabras comunes con su lectura y traducción.
+                REQUISITOS DE FORMATO:
+                - Responde en ESPAÑOL LATINOAMERICANO fluido.
+                - Sé técnicamente riguroso y no inventes componentes.
+                - No cortes la respuesta.` }]
             }],
             generationConfig: {
                 temperature: 0.7,
