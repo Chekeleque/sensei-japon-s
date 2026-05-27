@@ -78,11 +78,16 @@ async function handleGemini(res, input, prompt) {
                 const data = await response.json();
 
                 // Si el modelo no existe (404), pasamos al siguiente modelo de la lista
-                if (response.status === 404) break;
+                if (response.status === 404) {
+                    lastError = `Modelo ${modelId} no encontrado (404).`;
+                    break;
+                }
 
                 // Si hay error de cuota o servidor, reintentamos con espera
                 if (response.status === 429 || response.status === 503) {
                     attempts++;
+                    lastError = `Modelo ${modelId} saturado (${response.status}): ${data.error?.message || 'Servicio no disponible'}`;
+                    
                     if (attempts <= maxAttempts) {
                         await new Promise(resolve => setTimeout(resolve, 1500 * attempts));
                         continue;
@@ -91,7 +96,7 @@ async function handleGemini(res, input, prompt) {
                 }
 
                 if (!response.ok) {
-                    throw new Error(data.error?.message || 'Error desconocido');
+                    throw new Error(data.error?.message || `Error HTTP ${response.status}`);
                 }
 
                 const candidate = data.candidates?.[0];
@@ -102,7 +107,7 @@ async function handleGemini(res, input, prompt) {
                 throw new Error(candidate?.finishReason || 'Respuesta vacía');
 
             } catch (err) {
-                lastError = err.message;
+                lastError = `${modelId} -> ${err.message}`;
                 break; // Error fatal en este modelo, saltar al siguiente
             }
         }
