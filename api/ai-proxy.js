@@ -28,80 +28,89 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
 
-    // Si "gemini-1.5-flash" te sigue dando error de "not found", 
-    // prueba a cambiarlo por "gemini-1.5-flash-8b" (que es la versión Lite).
-    const MODEL_ID = "gemini-1.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
+    /**
+     * MODEL_ID sugeridos:
+     * - "gemini-1.5-flash" (El estándar equilibrado)
+     * - "gemini-1.5-flash-8b" (Es el modelo "Lite", más rápido y con mayor cuota)
+     */
+    const MODELS_TO_TRY = ["gemini-1.5-flash", "gemini-1.5-flash-8b"];
+    const API_VERSION = "v1beta"; // Usamos v1beta para máxima compatibilidad con modelos Flash
 
-    let response;
-    let attempts = 0;
-    const maxAttempts = 2; // Reintentar hasta 2 veces si está saturado
+    let lastError = null;
 
-    while (attempts <= maxAttempts) {
-        response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: `Eres un Sensei experto en lingüística japonesa y etimología.
-                    Analiza con precisión técnica el texto: "${input}". 
-                    Tarea: ${prompt}.
+    for (const modelId of MODELS_TO_TRY) {
+        const url = `https://generativelanguage.googleapis.com/${API_VERSION}/models/${modelId}:generateContent?key=${API_KEY}`;
+        let attempts = 0;
+        const maxAttempts = 2;
 
-                    REGLAS OBLIGATORIAS PARA KANJI:
-                    1. RADICAL (Bushu): Identifica el radical principal (Kangxi). Indica su nombre, significado y posición técnica (ej. hen, tsukuri, kammuri).
-                    2. COMPONENTES: Desglosa otros elementos visuales si existen.
-                    3. SIGNIFICADO: Concepto principal y matices.
-                    4. LECTURAS: Onyomi (en Katakana) y Kunyomi (en Hiragana).
-                    5. FICHA TÉCNICA: Trazos y nivel JLPT.
-                    6. VOCABULARIO: 3 ejemplos reales con lectura y traducción.
+        while (attempts <= maxAttempts) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: `Eres un Sensei experto en lingüística japonesa y etimología.
+                            Analiza con precisión técnica el texto: "${input}". 
+                            Tarea: ${prompt}.
+        
+                            REGLAS OBLIGATORIAS PARA KANJI:
+                            1. RADICAL (Bushu): Identifica el radical principal (Kangxi). Indica su nombre, significado y posición técnica (ej. hen, tsukuri, kammuri).
+                            2. COMPONENTES: Desglosa otros elementos visuales si existen.
+                            3. SIGNIFICADO: Concepto principal y matices.
+                            4. LECTURAS: Onyomi (en Katakana) y Kunyomi (en Hiragana).
+                            5. FICHA TÉCNICA: Trazos y nivel JLPT.
+                            6. VOCABULARIO: 3 ejemplos reales con lectura y traducción.
+        
+                            REQUISITOS DE FORMATO:
+                            - Idioma: Español Latinoamericano.
+                            - Rigor: No inventes radicales ni significados.
+                            - Integridad: No cortes la respuesta.` }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.2,
+                            maxOutputTokens: 2048,
+                            topP: 0.95,
+                        }
+                    })
+                });
 
-                    REQUISITOS DE FORMATO:
-                    - Idioma: Español Latinoamericano.
-                    - Rigor: No inventes radicales ni significados. Si el texto no es un Kanji, analízalo como gramática o vocabulario general.
-                    - Integridad: No cortes la respuesta.` }]
-                }],
-                generationConfig: {
-                    temperature: 0.2, // Más bajo = más preciso/técnico
-                    maxOutputTokens: 2048,
-                    topP: 0.95,
-                },
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                ]
-            })
-        });
+                const data = await response.json();
 
-        if (response.status === 429 || response.status === 503) {
-            attempts++;
-            if (attempts <= maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
-                continue;
+                // Si el modelo no existe (404), pasamos al siguiente modelo de la lista
+                if (response.status === 404) break;
+
+                // Si hay error de cuota o servidor, reintentamos con espera
+                if (response.status === 429 || response.status === 503) {
+                    attempts++;
+                    if (attempts <= maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 1500 * attempts));
+                        continue;
+                    }
+                    break; // Agotados los reintentos para este modelo, probamos el siguiente
+                }
+
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'Error desconocido');
+                }
+
+                const candidate = data.candidates?.[0];
+                if (candidate?.content?.parts?.[0]?.text) {
+                    return res.status(200).json({ text: candidate.content.parts[0].text });
+                }
+                
+                throw new Error(candidate?.finishReason || 'Respuesta vacía');
+
+            } catch (err) {
+                lastError = err.message;
+                break; // Error fatal en este modelo, saltar al siguiente
             }
         }
-        break;
     }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-        const status = response.status;
-        if (status === 503 || status === 429) {
-            return res.status(status).json({ error: 'Google está saturado. Reintenta en unos segundos.' });
-        }
-        return res.status(status).json({ error: data.error?.message || 'Error en Gemini API' });
-    }
-
-    const candidate = data.candidates?.[0];
-    if (candidate?.content?.parts?.[0]?.text) {
-        return res.status(200).json({ text: candidate.content.parts[0].text });
-    }
-
-    // Manejo de bloqueos por seguridad o respuestas vacías
-    const finishReason = candidate?.finishReason || 'UNKNOWN';
-    return res.status(500).json({ error: `No se generó contenido. Razón: ${finishReason}` });
+    return res.status(500).json({ 
+        error: `No se pudo obtener respuesta de ningún modelo. Último error: ${lastError}` 
+    });
 }
 
 async function handleDeepL(res, input, target_lang) {
