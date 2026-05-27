@@ -28,44 +28,61 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
 
-    // Usamos el endpoint v1 estable. Si persiste el error "not found", 
-    // verifica que tu API Key sea de Google AI Studio (https://aistudio.google.com/)
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // Si "gemini-1.5-flash" te sigue dando error de "not found", 
+    // prueba a cambiarlo por "gemini-1.5-flash-8b" (que es la versión Lite).
+    const MODEL_ID = "gemini-1.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{ text: `Actúa como un Sensei experto en etimología japonesa.
-                Analiza el texto: "${input}". 
-                Tarea adicional: ${prompt}.
+    let response;
+    let attempts = 0;
+    const maxAttempts = 2; // Reintentar hasta 2 veces si está saturado
 
-                REGLAS DE ORO PARA KANJI:
-                1. RADICAL (Bushu): Identifica el radical principal según el sistema Kangxi. Explica su significado y qué aporta al kanji actual.
-                2. SIGNIFICADO: Define el concepto principal y matices de uso.
-                3. LECTURAS: Onyomi (en Katakana) y Kunyomi (en Hiragana).
-                4. FICHA TÉCNICA: Número de trazos y nivel JLPT (N5 a N1).
-                5. VOCABULARIO: Proporciona 3 palabras compuestas reales con su lectura y traducción.
+    while (attempts <= maxAttempts) {
+        response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: `Eres un Sensei experto en lingüística japonesa y etimología.
+                    Analiza con precisión técnica el texto: "${input}". 
+                    Tarea: ${prompt}.
 
-                REQUISITOS DE FORMATO:
-                - Idioma: Español Latinoamericano.
-                - Rigor técnico: No inventes componentes ni significados. 
-                - No cortes la respuesta.` }]
-            }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 2048,
-                topP: 0.95,
-            },
-            safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-            ]
-        })
-    });
+                    REGLAS OBLIGATORIAS PARA KANJI:
+                    1. RADICAL (Bushu): Identifica el radical principal (Kangxi). Indica su nombre, significado y posición técnica (ej. hen, tsukuri, kammuri).
+                    2. COMPONENTES: Desglosa otros elementos visuales si existen.
+                    3. SIGNIFICADO: Concepto principal y matices.
+                    4. LECTURAS: Onyomi (en Katakana) y Kunyomi (en Hiragana).
+                    5. FICHA TÉCNICA: Trazos y nivel JLPT.
+                    6. VOCABULARIO: 3 ejemplos reales con lectura y traducción.
+
+                    REQUISITOS DE FORMATO:
+                    - Idioma: Español Latinoamericano.
+                    - Rigor: No inventes radicales ni significados. Si el texto no es un Kanji, analízalo como gramática o vocabulario general.
+                    - Integridad: No cortes la respuesta.` }]
+                }],
+                generationConfig: {
+                    temperature: 0.2, // Más bajo = más preciso/técnico
+                    maxOutputTokens: 2048,
+                    topP: 0.95,
+                },
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ]
+            })
+        });
+
+        if (response.status === 429 || response.status === 503) {
+            attempts++;
+            if (attempts <= maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+                continue;
+            }
+        }
+        break;
+    }
 
     const data = await response.json();
 
