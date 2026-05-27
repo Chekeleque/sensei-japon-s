@@ -28,40 +28,28 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
 
-    // --- Búsqueda automática de modelo disponible ---
-    // Consultamos siempre para asegurar que el modelo existe y está disponible
-    const listResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
-    const listData = await listResp.json();
-
-    if (!listResp.ok) {
-        throw new Error(listData.error?.message || 'No se pudo obtener la lista de modelos de Gemini.');
-    }
-
-    const models = listData.models || [];
-    // Priorizamos gemini-1.5-flash por velocidad y estabilidad
-    let foundModel = models.find(m => m.name.includes("gemini-1.5-flash") && m.supportedGenerationMethods.includes("generateContent"));
-
-    if (!foundModel) {
-        foundModel = models.find(m => m.supportedGenerationMethods.includes("generateContent"));
-    }
-
-    if (!foundModel) {
-        throw new Error('No se encontró ningún modelo de Gemini compatible en este momento.');
-    }
-    const selectedModelName = foundModel.name;
-
-    const url = `https://generativelanguage.googleapis.com/v1/${selectedModelName}:generateContent?key=${API_KEY}`;
+    // Usamos gemini-1.5-flash directamente para mayor velocidad y evitar cuotas de listado de modelos
+    const modelName = "models/gemini-1.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1/${modelName}:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{
-                parts: [{ text: `Actúa como un profesor de japonés experto. Texto: "${input}". Tarea: ${prompt}. Responde en ESPAÑOL LATINOAMERICANO fluido. Usa Kanji(Hiragana). IMPORTANTE: Proporciona una explicación detallada, completa y no cortes la respuesta bajo ninguna circunstancia.` }]
+                parts: [{ text: `Eres un experto lingüista y profesor de japonés. 
+                Analiza el siguiente texto: "${input}". 
+                Tarea: ${prompt}. 
+                REQUISITOS OBLIGATORIOS:
+                1. Si es un Kanji, detalla sus RADICALES, significado, lecturas Onyomi/Kunyomi y ejemplos de uso.
+                2. Responde en ESPAÑOL LATINOAMERICANO fluido.
+                3. Proporciona una explicación técnica completa.
+                4. No omitas información ni cortes la respuesta.` }]
             }],
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 4096, // Aumentado significativamente para evitar cortes
+                maxOutputTokens: 4096,
+                topP: 0.95,
             }
         })
     });
