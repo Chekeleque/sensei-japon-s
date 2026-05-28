@@ -29,11 +29,10 @@ async function handleGemini(res, input, prompt) {
     if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
 
     /**
-     * MODEL_ID sugeridos:
-     * - "gemini-1.5-flash" (El estándar equilibrado)
-     * - "gemini-1.5-flash-8b" (Es el modelo "Lite", más rápido y con mayor cuota)
+     * Intentamos primero con Pro para máxima precisión en el análisis de Kanjis,
+     * y usamos Flash como respaldo por si hay saturación.
      */
-    const MODELS_TO_TRY = ["gemini-1.5-flash", "gemini-1.5-flash-8b"];
+    const MODELS_TO_TRY = ["gemini-1.5-pro", "gemini-1.5-flash"];
     const API_VERSION = "v1beta"; // Usamos v1beta para máxima compatibilidad con modelos Flash
 
     let lastError = null;
@@ -55,6 +54,7 @@ async function handleGemini(res, input, prompt) {
                             Tarea: ${prompt}.
         
                             REGLAS OBLIGATORIAS PARA KANJI:
+                            0. PENSAMIENTO PREVIO: Antes de responder, verifica internamente si el componente es un radical real del sistema Kangxi o solo un elemento fonético/visual.
                             1. RADICAL (Bushu): Identifica el radical principal (Kangxi). Indica su nombre, significado y posición técnica (ej. hen, tsukuri, kammuri).
                             2. COMPONENTES: Desglosa otros elementos visuales si existen.
                             3. SIGNIFICADO: Concepto principal y matices.
@@ -62,15 +62,16 @@ async function handleGemini(res, input, prompt) {
                             5. FICHA TÉCNICA: Trazos y nivel JLPT.
                             6. VOCABULARIO: 3 ejemplos reales con lectura y traducción.
         
-                            REQUISITOS DE FORMATO:
+                            REQUISITOS DE RIGOR:
+                            - Si no estás 100% seguro del origen etimológico o del radical, escribe "Información no verificada" en ese campo en lugar de suponer.
+                            - Prioriza el sistema de clasificación de diccionarios oficiales (como el Nelson o KANJIDIC2).
                             - Idioma: Español Latinoamericano.
-                            - Rigor: No inventes radicales ni significados.
                             - Integridad: No cortes la respuesta.` }]
                         }],
                         generationConfig: {
-                            temperature: 0.2,
+                            temperature: 0.0,
                             maxOutputTokens: 2048,
-                            topP: 0.95,
+                            topP: 0.8,
                         }
                     })
                 });
