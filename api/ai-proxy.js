@@ -33,12 +33,11 @@ async function handleGemini(res, input, prompt) {
      * y usamos Flash como respaldo por si hay saturación.
      */
     const MODELS_TO_TRY = [
-        "gemini-1.5-pro", 
-        "gemini-1.5-flash", 
-        "gemini-1.5-flash-8b", // Este es el "Flash Lite" que mencionaste
-        "gemini-1.5-pro-latest"
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash"
     ];
-    const API_VERSION = "v1beta"; // Usamos v1beta para máxima compatibilidad con modelos Flash
+    const API_VERSION = "v1"; // Versión estable actual
 
     let lastError = null;
 
