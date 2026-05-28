@@ -32,7 +32,12 @@ async function handleGemini(res, input, prompt) {
      * Intentamos primero con Pro para máxima precisión en el análisis de Kanjis,
      * y usamos Flash como respaldo por si hay saturación.
      */
-    const MODELS_TO_TRY = ["gemini-1.5-pro", "gemini-1.5-flash"];
+    const MODELS_TO_TRY = [
+        "gemini-1.5-pro", 
+        "gemini-1.5-flash", 
+        "gemini-1.5-flash-8b", // Este es el "Flash Lite" que mencionaste
+        "gemini-1.5-pro-latest"
+    ];
     const API_VERSION = "v1beta"; // Usamos v1beta para máxima compatibilidad con modelos Flash
 
     let lastError = null;
