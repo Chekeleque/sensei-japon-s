@@ -30,7 +30,7 @@ async function handleGemini(res, input, prompt) {
     if (!API_KEY) throw new Error('API Key no definida en las variables de entorno.');
 
     const URL = "https://api.groq.com/openai/v1/chat/completions";
-    const MODEL = "llama3-70b-8192"; // Modelo de alta capacidad, veloz y gratuito
+    const MODEL = "llama-3.3-70b-versatile";
 
     try {
         const response = await fetch(URL, {
