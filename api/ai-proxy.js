@@ -78,7 +78,7 @@ async function handleGemini(res, input, prompt) {
                         generationConfig: {
                             temperature: 0.0,
                             maxOutputTokens: 2048,
-                            topP: 0.8,
+                            topP: 0.7,
                         }
                     })
                 });
@@ -97,7 +97,7 @@ async function handleGemini(res, input, prompt) {
                     lastError = `Modelo ${modelId} saturado (${response.status}): ${data.error?.message || 'Servicio no disponible'}`;
                     
                     if (attempts <= maxAttempts) {
-                        await new Promise(resolve => setTimeout(resolve, 1500 * attempts));
+                        await new Promise(resolve => setTimeout(resolve, 4000 * attempts));
                         continue;
                     }
                     break; // Agotados los reintentos para este modelo, probamos el siguiente
