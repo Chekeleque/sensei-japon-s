@@ -39,11 +39,14 @@ async function handleGemini(res, input, prompt) {
 
     for (const modelId of MODELS_TO_TRY) {
         const url = `https://generativelanguage.googleapis.com/${API_VERSION}/models/${modelId}:generateContent?key=${API_KEY}`;
+        
         let attempts = 0;
         const maxAttempts = 2;
 
+        /* eslint-disable no-await-in-loop */
         while (attempts <= maxAttempts) {
             try {
+                // Realizamos la petición al modelo actual
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -112,6 +115,7 @@ async function handleGemini(res, input, prompt) {
                 break; // Error fatal en este modelo, saltar al siguiente
             }
         }
+        /* eslint-enable no-await-in-loop */
     }
 
     return res.status(500).json({ 
@@ -126,12 +130,16 @@ async function handleDeepL(res, input, target_lang) {
     // --- Implementación de caché simple en memoria para DeepL ---
     // Utiliza un objeto global para el caché. En un entorno serverless, esto persistirá
     // mientras la instancia del worker esté activa.
-    const cache = global._deeplCache = global._deeplCache || new Map();
+    if (!globalThis._deeplCache) {
+        globalThis._deeplCache = new Map();
+    }
+    const cache = globalThis._deeplCache;
     const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
     const cacheKey = JSON.stringify({ input, target_lang });
 
-    if (cache.has(cacheKey) && (Date.now() - cache.get(cacheKey).timestamp < CACHE_TTL_MS)) {
-        return res.status(200).json({ translations: [{ text: cache.get(cacheKey).text, cached: true }] });
+    const cachedEntry = cache.get(cacheKey);
+    if (cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_TTL_MS)) {
+        return res.status(200).json({ translations: [{ text: cachedEntry.text, cached: true }] });
     }
     // --- Fin de la implementación de caché ---
 
