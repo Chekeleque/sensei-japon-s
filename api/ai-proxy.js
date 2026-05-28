@@ -25,106 +25,60 @@ export default async function handler(req, res) {
 }
 
 async function handleGemini(res, input, prompt) {
-    const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) throw new Error('GEMINI_API_KEY no definida.');
+    // Usamos la API Key que tenemos configurada en las variables de entorno
+    const API_KEY = process.env.GEMINI_API_KEY; 
+    if (!API_KEY) throw new Error('API Key no definida en las variables de entorno.');
 
-    /**
-     * Intentamos primero con Pro para máxima precisión en el análisis de Kanjis,
-     * y usamos Flash como respaldo por si hay saturación.
-     */
-    const MODELS_TO_TRY = [
-        "gemini-2.5-pro",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash"
-    ];
-    const API_VERSION = "v1"; // Versión estable actual
+    const URL = "https://api.groq.com/openai/v1/chat/completions";
+    const MODEL = "llama3-70b-8192"; // Modelo de alta capacidad, veloz y gratuito
 
-    let lastError = null;
-
-    for (const modelId of MODELS_TO_TRY) {
-        const url = `https://generativelanguage.googleapis.com/${API_VERSION}/models/${modelId}:generateContent?key=${API_KEY}`;
-        
-        let attempts = 0;
-        const maxAttempts = 2;
-
-        /* eslint-disable no-await-in-loop */
-        while (attempts <= maxAttempts) {
-            try {
-                // Realizamos la petición al modelo actual
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: `Eres un Sensei experto en lingüística japonesa y etimología.
-                            Analiza con precisión técnica el texto: "${input}". 
-                            Tarea: ${prompt}.
-        
-                            REGLAS OBLIGATORIAS PARA KANJI:
-                            0. PENSAMIENTO PREVIO: Antes de responder, verifica internamente si el componente es un radical real del sistema Kangxi o solo un elemento fonético/visual.
-                            1. RADICAL (Bushu): Identifica el radical principal (Kangxi). Indica su nombre, significado y posición técnica (ej. hen, tsukuri, kammuri).
-                            2. COMPONENTES: Desglosa otros elementos visuales si existen.
-                            3. SIGNIFICADO: Concepto principal y matices.
-                            4. LECTURAS: Onyomi (en Katakana) y Kunyomi (en Hiragana).
-                            5. FICHA TÉCNICA: Trazos y nivel JLPT.
-                            6. VOCABULARIO: 3 ejemplos reales con lectura y traducción.
-        
-                            REQUISITOS DE RIGOR:
-                            - Si no estás 100% seguro del origen etimológico o del radical, escribe "Información no verificada" en ese campo en lugar de suponer.
-                            - Prioriza el sistema de clasificación de diccionarios oficiales (como el Nelson o KANJIDIC2).
-                            - Idioma: Español Latinoamericano.
-                            - Integridad: No cortes la respuesta.` }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.0,
-                            maxOutputTokens: 4096,
-                            topP: 0.7,
-                        }
-                    })
-                });
-
-                const data = await response.json();
-
-                // Si el modelo no existe (404), pasamos al siguiente modelo de la lista
-                if (response.status === 404) {
-                    lastError = `Modelo ${modelId} no encontrado (404).`;
-                    break;
-                }
-
-                // Si hay error de cuota o servidor, reintentamos con espera
-                if (response.status === 429 || response.status === 503) {
-                    attempts++;
-                    lastError = `Modelo ${modelId} saturado (${response.status}): ${data.error?.message || 'Servicio no disponible'}`;
-                    
-                    if (attempts <= maxAttempts) {
-                        await new Promise(resolve => setTimeout(resolve, 4000 * attempts));
-                        continue;
+    try {
+        const response = await fetch(URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: MODEL,
+                messages: [
+                    {
+                        role: "system",
+                        content: `Eres un Sensei experto en lingüística japonesa y etimología.
+                        Analiza con precisión técnica el texto que proporcione el usuario.
+                        Idioma de respuesta: Español Latinoamericano.
+                                                
+                        REQUISITOS DE RIGOR:
+                        - Si no estás 100% seguro del origen etimológico o del radical, escribe "Información no verificada" en ese campo en lugar de suponer.
+                        - Integridad: Genera la respuesta completa, no la cortes bajo ninguna circunstancia.`
+                    },
+                    {
+                        role: "user",
+                        content: `Texto a analizar: "${input}". Tarea específica a realizar: ${prompt}`
                     }
-                    break; // Agotados los reintentos para este modelo, probamos el siguiente
-                }
+                ],
+                temperature: 0.1,
+                max_tokens: 4096, // Espacio de sobra para que no se corten los resultados
+                top_p: 0.8
+            })
+        });
 
-                if (!response.ok) {
-                    throw new Error(data.error?.message || `Error HTTP ${response.status}`);
-                }
-
-                const candidate = data.candidates?.[0];
-                if (candidate?.content?.parts?.[0]?.text) {
-                    return res.status(200).json({ text: candidate.content.parts[0].text });
-                }
-                
-                throw new Error(candidate?.finishReason || 'Respuesta vacía');
-
-            } catch (err) {
-                lastError = `${modelId} -> ${err.message}`;
-                break; // Error fatal en este modelo, saltar al siguiente
-            }
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error?.message || `Error HTTP ${response.status} en Groq`);
         }
-        /* eslint-enable no-await-in-loop */
-    }
 
-    return res.status(500).json({ 
-        error: `No se pudo obtener respuesta de ningún modelo. Último error: ${lastError}` 
-    });
+        const textResponse = data.choices?.[0]?.message?.content;
+        if (textResponse) {
+            return res.status(200).json({ text: textResponse });
+        }
+        throw new Error('Respuesta vacía de Groq');
+    } catch (err) {
+        console.error("Error en Groq Proxy:", err);
+        return res.status(500).json({ 
+            error: `No se pudo obtener respuesta de Groq. Error: ${err.message}` 
+        });
+    }
 }
 
 async function handleDeepL(res, input, target_lang) {
