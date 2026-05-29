@@ -67,10 +67,21 @@ async function handleGemini(res, input, prompt) {
             })
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+        if (!responseText) {
+            throw new Error(`El servidor devolvió una respuesta vacía (Status: ${response.status})`);
+        }
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            throw new Error(`La respuesta no es un JSON válido (Status: ${response.status}). Contenido: ${responseText.substring(0, 200)}`);
+        }
+
         if (!response.ok) {
             console.error("Detalles del error de Google:", JSON.stringify(data, null, 2));
-            throw new Error(data.error?.message || `Error HTTP ${response.status}: ${JSON.stringify(data)}`);
+            throw new Error(data.error?.message || `Error HTTP ${response.status}`);
         }
 
         const textResponse = data.choices?.[0]?.message?.content;
@@ -119,10 +130,20 @@ async function handleDeepL(res, input, target_lang) {
         })
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    if (!responseText) {
+        throw new Error(`DeepL devolvió una respuesta vacía (Status: ${response.status})`);
+    }
+
+    let data;
+    try {
+        data = JSON.parse(responseText);
+    } catch (e) {
+        throw new Error(`Respuesta de DeepL no válida (Status: ${response.status})`);
+    }
 
     if (!response.ok) {
-        return res.status(response.status).json({ error: data.message || 'Error en DeepL API' });
+        throw new Error(data.message || `Error en DeepL API (${response.status})`);
     }
 
     const translatedText = data.translations[0].text;
