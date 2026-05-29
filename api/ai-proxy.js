@@ -28,8 +28,8 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY; 
     if (!API_KEY) throw new Error('La variable de entorno GEMINI_API_KEY no está configurada.');
 
-    // Cambiamos a la API Nativa de Google (generateContent) para eliminar los errores 404 de la capa de compatibilidad
-    const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // Cambiamos a la API Nativa de Google (v1 estable) para resolver el error de versión 404
+    const URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     try {
         const response = await fetch(URL, {
