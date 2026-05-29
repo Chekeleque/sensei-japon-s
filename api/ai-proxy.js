@@ -25,12 +25,12 @@ export default async function handler(req, res) {
 }
 
 async function handleGemini(res, input, prompt) {
-    // Usamos la API Key que tenemos configurada en las variables de entorno
     const API_KEY = process.env.GEMINI_API_KEY; 
-    if (!API_KEY) throw new Error('API Key no definida en las variables de entorno.');
+    if (!API_KEY) throw new Error('API Key de Gemini no definida.');
 
-    const URL = "https://api.groq.com/openai/v1/chat/completions";
-    const MODEL = "llama-3.3-70b-versatile";
+    // Usamos el endpoint de compatibilidad de OpenAI de Google para mayor estabilidad
+    const URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    const MODEL = "gemini-1.5-flash"; 
 
     try {
         const response = await fetch(URL, {
@@ -44,33 +44,43 @@ async function handleGemini(res, input, prompt) {
                 messages: [
                     {
                         role: "system",
-                        content: `Eres un Sensei experto en lingüística japonesa, anatomía de Kanjis y etimología histórica. Tu prioridad absoluta es la VERACIDAD CIENTÍFICA.                                                REGLAS DE RIGOR GRÁFICO (CANDADOS ANTI-ALUCINACIÓN):                        1. ANATOMÍA REAL: Analiza los caracteres basándote estrictamente en diccionarios oficiales (Kangxi/Nelson). Queda PROHIBIDO inventar o confundir componentes por similitud visual vaga.                        2. CASO DE CONTROL (Ejemplo de veto): Si el usuario introduce el Kanji '爽', tu base de datos debe reflejar que su radical oficial es 爻 (o en su defecto 大). Se compone de una persona grande y cuatro marcas de equis. No tiene relación alguna con lluvia (雨), agua (氵) ni acantilados (厂). Cualquier historial etimológico que invente lluvia o agua para este carácter es FALSO.                        3. BOTÓN DE EMERGENCIA: Si no tienes el desglose exacto y verificado del radical histórico de un Kanji en tu base de conocimientos, escribe textualmente '[Información anatómica/etimológica no verificada]' en ese campo. Es preferible dejar el campo vacío que inventar una historia.                        4. PERSONALIDAD Y TONO: Adopta de forma obligatoria la personalidad de un profesor de japonés experto, carismático, empático y entusiasta. Comienza siempre tus respuestas con un saludo natural, dinámico y ameno para introducir el análisis (Ej: "¡Hola a todos! Como su profesor..."). Explica con un estilo fluido, narrativo y sumamente educativo.                        5. FORMATO Y MAQUETACIÓN: Utiliza títulos claros en Markdown (como '### Análisis', '### Información Técnica', '**Texto original:**') para que la interfaz se vea atractiva, intuitiva y limpia. Estructura la información de manera ordenada, pero con una narrativa extendida y agradable dentro de cada sección.                        6. IDIOMA: Español Latinoamericano.                        7. FIDELIDAD AL PROMPT: Aunque redactes con un estilo fluido y narrativo, debes incluir obligatoriamente cada uno de los campos de información técnica que el usuario solicita en su prompt (como Lecturas Onyomi/Kunyomi, Trazos, JLPT y Vocabulario). No omitas ningún dato técnico.                        8. PROHIBICIÓN DE ROMAJI: Queda terminantemente prohibido el uso de romaji (alfabeto latino) para representar sonidos japoneses. Las lecturas deben ser exclusivamente en Katakana para Onyomi y Hiragana para Kunyomi. El vocabulario debe seguir el formato 'Kanji(Kana) - Significado'.                        9. RIGOR GRAMATICAL Y MORFOLÓGICO: Queda terminantemente prohibido desglosar palabras o saludos en sílabas individuales inventando funciones gramaticales falsas (por ejemplo, no descompongas saludos como "こんにちは" o "ありがとう" en letras sueltas diciendo que son partículas). Si analizas un saludo o frase hecha, explica su origen etimológico real (como frases históricas incompletas que se consolidaron en el tiempo) y analiza las partículas reales del idioma (como la partícula 'wa' en konnichiwa).`
+                        content: `Adopta de forma obligatoria la personalidad de un profesor de japonés experto, carismático y entusiasta. 
+
+                        REQUISITOS LINGÜÍSTICOS:
+                        - Tu nivel de japonés y etimología debe ser 100% real y académico. Prohibido inventar partículas o desglosar palabras como "こんにちは" en letras individuales. Explica que viene de "今日 (Konnichi)" + la partícula "は (wa)".
+                        - Si se solicita información de un Kanji (como trazos, radicales o JLPT), extrae los datos reales. Si dudas, escribe '[Información no verificada]'.
+
+                        ESTILO Y FORMATO:
+                        - Comienza SIEMPRE con un saludo natural de profesor para introducir el tema (Ej: "¡Hola a todos! Como su profesor de japonés...").
+                        - Diseña la respuesta de manera muy intuitiva y visual utilizando títulos claros en Markdown (###) y negritas.
+                        - En las lecturas técnicas usa KATAKANA para Onyomi e HIRAGANA para Kunyomi.
+                        - En el vocabulario usa el formato plano: 'Kanji(Kana) - Significado'. Ej: 車庫(しゃこ) - garaje.
+                        - Idioma: Español Latinoamericano.`
                     },
                     {
                         role: "user",
-                        content: `Texto a analizar: "${input}". Tarea específica a realizar: ${prompt}`
+                        content: `Texto a analizar: "${input}". Tarea: ${prompt}`
                     }
                 ],
-                temperature: 0.1,
-                max_tokens: 4096, // Espacio de sobra para que no se corten los resultados
-                top_p: 0.8
+                temperature: 0.3,
+                max_tokens: 4096
             })
         });
 
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.error?.message || `Error HTTP ${response.status} en Groq`);
+            throw new Error(data.error?.message || `Error HTTP ${response.status}`);
         }
 
         const textResponse = data.choices?.[0]?.message?.content;
         if (textResponse) {
             return res.status(200).json({ text: textResponse });
         }
-        throw new Error('Respuesta vacía de Groq');
+        throw new Error('Respuesta vacía');
     } catch (err) {
-        console.error("Error en Groq Proxy:", err);
+        console.error("Error en Gemini Proxy:", err);
         return res.status(500).json({ 
-            error: `No se pudo obtener respuesta de Groq. Error: ${err.message}` 
+            error: `Error en el Sensei: ${err.message}` 
         });
     }
 }
