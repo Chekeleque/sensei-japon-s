@@ -49,7 +49,7 @@ async function handleGemini(res, input, prompt) {
                         Idioma de respuesta: Español Latinoamericano.
                                                 
                         REQUISITOS DE RIGOR:
-                        - Si no estás 100% seguro del origen etimológico o del radical, escribe "Información no verificada" en ese campo en lugar de suponer.
+                        - REGLA DE ORO: Si el radical o los componentes no coinciden exactamente con la estructura anatómica del Kanji, o si tienes la más mínima duda, escribe obligatoriamente "[Información anatómica/etimológica no verificada]" en lugar de inventar. Prohibido inventar o confundir elementos visuales.
                         - Integridad: Genera la respuesta completa, no la cortes bajo ninguna circunstancia.`
                     },
                     {
