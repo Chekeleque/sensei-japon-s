@@ -28,23 +28,19 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY; 
     if (!API_KEY) throw new Error('La variable de entorno GEMINI_API_KEY no está configurada.');
 
-    // Usamos el endpoint estable v1 para evitar conflictos de enrutamiento con v1main
-    const URL = "https://generativelanguage.googleapis.com/v1/openai/chat/completions";
-    const MODEL = "gemini-1.5-flash"; 
+    // Cambiamos a la API Nativa de Google (generateContent) para eliminar los errores 404 de la capa de compatibilidad
+    const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     try {
         const response = await fetch(URL, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${API_KEY}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: MODEL,
-                messages: [
-                    {
-                        role: "system",
-                        content: `Adopta de forma obligatoria la personalidad de un profesor de japonés experto, carismático y entusiasta. 
+                system_instruction: {
+                    parts: [{
+                        text: `Adopta de forma obligatoria la personalidad de un profesor de japonés experto, carismático y entusiasta. 
 
                         REQUISITOS LINGÜÍSTICOS:
                         - Tu nivel de japonés y etimología debe ser 100% real y académico. Prohibido inventar partículas o desglosar palabras como "こんにちは" en letras individuales. Explica que viene de "今日 (Konnichi)" + la partícula "は (wa)".
@@ -56,14 +52,16 @@ async function handleGemini(res, input, prompt) {
                         - En las lecturas técnicas usa KATAKANA para Onyomi e HIRAGANA para Kunyomi.
                         - En el vocabulario usa el formato plano: 'Kanji(Kana) - Significado'. Ej: 車庫(しゃこ) - garaje.
                         - Idioma: Español Latinoamericano.`
-                    },
-                    {
-                        role: "user",
-                        content: `Texto a analizar: "${input}". Tarea: ${prompt}`
-                    }
-                ],
-                temperature: 0.3,
-                max_tokens: 4096
+                    }]
+                },
+                contents: [{
+                    role: "user",
+                    parts: [{ text: `Texto a analizar: "${input}". Tarea: ${prompt}` }]
+                }],
+                generationConfig: {
+                    temperature: 0.3,
+                    maxOutputTokens: 4096
+                }
             })
         });
 
@@ -84,7 +82,7 @@ async function handleGemini(res, input, prompt) {
             throw new Error(data.error?.message || `Error HTTP ${response.status}`);
         }
 
-        const textResponse = data.choices?.[0]?.message?.content;
+        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (textResponse) {
             return res.status(200).json({ text: textResponse });
         }
