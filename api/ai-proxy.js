@@ -28,8 +28,8 @@ async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY; 
     if (!API_KEY) throw new Error('La variable de entorno GEMINI_API_KEY no está configurada.');
 
-    // Usamos el endpoint de compatibilidad de OpenAI de Google para mayor estabilidad
-    const URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    // Usamos el endpoint estable v1 para evitar conflictos de enrutamiento con v1main
+    const URL = "https://generativelanguage.googleapis.com/v1/openai/chat/completions";
     const MODEL = "gemini-1.5-flash"; 
 
     try {
