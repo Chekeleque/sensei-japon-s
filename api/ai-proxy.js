@@ -26,11 +26,11 @@ export default async function handler(req, res) {
 
 async function handleGemini(res, input, prompt) {
     const API_KEY = process.env.GEMINI_API_KEY; 
-    if (!API_KEY) throw new Error('API Key de Gemini no definida.');
+    if (!API_KEY) throw new Error('La variable de entorno GEMINI_API_KEY no está configurada.');
 
     // Usamos el endpoint de compatibilidad de OpenAI de Google para mayor estabilidad
     const URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-    const MODEL = "gemini-1.5-flash-latest"; 
+    const MODEL = "gemini-1.5-flash"; 
 
     try {
         const response = await fetch(URL, {
@@ -69,7 +69,8 @@ async function handleGemini(res, input, prompt) {
 
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.error?.message || `Error HTTP ${response.status}`);
+            console.error("Detalles del error de Google:", JSON.stringify(data, null, 2));
+            throw new Error(data.error?.message || `Error HTTP ${response.status}: ${JSON.stringify(data)}`);
         }
 
         const textResponse = data.choices?.[0]?.message?.content;
@@ -87,7 +88,7 @@ async function handleGemini(res, input, prompt) {
 
 async function handleDeepL(res, input, target_lang) {
     const API_KEY = process.env.DEEPL_API_KEY;
-    if (!API_KEY) throw new Error('DEEPL_API_KEY no definida.');
+    if (!API_KEY) throw new Error('La variable de entorno DEEPL_API_KEY no está configurada.');
 
     // --- Implementación de caché simple en memoria para DeepL ---
     // Utiliza un objeto global para el caché. En un entorno serverless, esto persistirá
