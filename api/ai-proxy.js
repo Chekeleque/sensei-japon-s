@@ -30,7 +30,7 @@ async function handleGemini(res, input, prompt) {
 
     // Usamos el endpoint de compatibilidad de OpenAI de Google para mayor estabilidad
     const URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-    const MODEL = "gemini-1.5-flash"; 
+    const MODEL = "gemini-1.5-flash-latest"; 
 
     try {
         const response = await fetch(URL, {
